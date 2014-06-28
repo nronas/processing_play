@@ -1,5 +1,6 @@
 // Declare an ArrayList of Vehicle objects
 ArrayList<Vehicle> vehicles;
+float b = 25;
 
 void setup()
 {
@@ -20,6 +21,7 @@ void draw()
     v.update();
     v.borders();
     v.display();
+    v.boundaries();
   }
   fill(255);
   text("Drag the mouse to generate new vehicles.", 10, height-16);
@@ -96,6 +98,38 @@ class Vehicle
     location.add(velocity);
     // Reset accelertion to 0 each cycle
     acceleration.mult(0);
+  }
+  
+   void boundaries()
+  {
+    PVector desired = null;
+    
+    if (location.x < b)
+    {
+      desired = new PVector(maxspeed, velocity.y);
+    }
+    else if (location.x > width - b)
+    {
+      desired = new PVector(-maxspeed, velocity.y);
+    }
+    
+    if (location.y < b)
+    {
+      desired = new PVector(velocity.x, maxspeed);
+    }
+    else if (location.y > height - b)
+    {
+      desired = new PVector(velocity.x, -maxspeed);
+    }
+    
+    if(desired !=null)
+    {
+      desired.normalize();
+      desired.mult(maxspeed);
+      PVector steer = PVector.sub(desired, velocity);
+      steer.limit(maxforce);
+      applyForce(steer);
+    }
   }
 
   void display() 
