@@ -1,38 +1,51 @@
 // Declare an ArrayList of Vehicle objects
-ArrayList<Vehicle> vehicles;
+ArrayList<Node> nodes;
 float b = 25;
-
+float p = 0.5;
 void setup()
 {
-  size(1000,600);
-  background(0);
-  vehicles = new ArrayList<Vehicle>();
+  size(600,600);
+  //background(255);
+  nodes = new ArrayList<Node>();
   for (int i = 0; i < 20; i++)
   {
-    vehicles.add(new Vehicle(random(width), random(height)));
+    nodes.add(new Node(random(width), random(height)));
   }
+  for (Node n : nodes){
+   n.pair = int(random(19));
+   n.pairNo = random(0,1);
+  }
+    
+  frameRate(30);
 }
 
 void draw()
-{ 
-  for (Vehicle v : vehicles)
-  {
-    v.separate(vehicles);//examine all the other vehicles in the process of calculating a separation force
-    v.update();
-    v.borders();
-    v.display();
-    v.boundaries();
-  }
-  fill(255);
-  text("Drag the mouse to generate new vehicles.", 10, height-16);
-}
-
-void mouseDragged()
 {
-  vehicles.add(new Vehicle(mouseX,mouseY));
+  background(255);
+  noStroke();
+  fill(255, 255, 255, 50);
+    rect(150,150,300, 300);
+  
+  for (Node n : nodes)
+  {
+    n.separate(nodes);//examine all the other nodes in the process of calculating a separation force
+    n.update();
+    //n.borders();
+    n.display();
+    n.boundaries();
+    n.displayLine();
+    //n.trail();
+  }
+//  fill(0);
+//  text("Drag the mouse to generate new nodes.", 10, height-16);
 }
 
-class Vehicle
+//void mouseDragged()
+//{
+//  nodes.add(new Node(mouseX,mouseY));
+//}
+
+class Node
 {
   PVector location;
   PVector velocity;
@@ -40,8 +53,10 @@ class Vehicle
   float r;
   float maxforce;
   float maxspeed;
+  int pair;
+  float pairNo;
   
-  Vehicle(float x, float y)
+  Node(float x, float y)
   {
     location = new PVector(x,y);
     r = 6;
@@ -49,6 +64,7 @@ class Vehicle
     maxforce = 0.2;
     acceleration = new PVector(0,0);
     velocity = new PVector(0,0);
+    velocity.mult(5);
   }
   
   void applyForce(PVector force)
@@ -56,36 +72,36 @@ class Vehicle
     acceleration.add(force);
   }
   
-  void separate(ArrayList<Vehicle> vehicles)//look all of the vehicles and see if any are too close
+  void separate(ArrayList<Node> nodes)//look all of the nodes and see if any are too close
   {
-    float desiredSeparation = r*2;//specifies how close is too close
-    PVector sum = new PVector();//start with an empty PVector
-    int count = 0;
-    for (Vehicle other: vehicles)
+  float desiredseparation = r+10;//specifies how close is too close
+  PVector sum = new PVector();//start with an empty PVector
+  int count = 0;
+  for (Node other: nodes)
+  {
+    float d = PVector.dist(location, other.location);//what is the distance between me and another Node?
+    
+    if ((d>0) && (d < desiredseparation))
     {
-      float d = PVector.dist(location, other.location);//what is the distance between me and another Vehicle?
-      
-      if ((d>0) && (d < desiredSeparation))
-      {
-        //calculate vector pointing away from meighbor
-        PVector diff = PVector.sub(location, other.location);
-        diff.normalize();
-        diff.div(d); //Weight by distance
-        sum.add(diff);
-        count++; //keep track of how many
-      }
+      //calculate vector pointing away from neighbor
+      PVector diff = PVector.sub(location, other.location);
+      diff.normalize();
+      diff.div(d); //Weight by distance
+      sum.add(diff);
+      count++; //keep track of how many
     }
-    if (count > 0) // We have to make sure we found at least one close vehicle.  We don’t want to bother doing anything
-    // if nothing is too close (not to mention we can’t
-    // divide by zero!)
-    {
-      sum.div(count);
-      sum.normalize();
-      sum.mult(maxspeed);
-      PVector steer = PVector.sub(sum,velocity);
-      steer.limit(maxforce);
-      applyForce(steer);
-    }
+  }
+  if (count > 0) // We have to make sure we found at least one close node.  We don’t want to bother doing anything
+  // if nothing is too close (not to mention we can’t
+  // divide by zero!)
+  {
+    sum.div(count);
+    sum.normalize();
+    sum.mult(maxspeed);
+    PVector steer = PVector.sub(sum,velocity);
+    steer.limit(maxforce);
+    applyForce(steer);
+  }
   }
 
 // Method to update location
@@ -100,7 +116,7 @@ class Vehicle
     acceleration.mult(0);
   }
   
-   void boundaries()
+    void boundaries()
   {
     PVector desired = null;
     
@@ -131,6 +147,8 @@ class Vehicle
       applyForce(steer);
     }
   }
+  
+
 
   void display() 
   {
@@ -141,13 +159,20 @@ class Vehicle
     ellipse(0, 0, r, r);
     popMatrix();
   }
+  
+  void displayLine(){
+    stroke(2);
+    
+    line(location.x, location.y, nodes.get(pair).location.x, nodes.get(pair).location.y);
+    //println(location.x, location.y, nodes.get(pair).location.x, nodes.get(pair).location.y);
+  }
 
   // Wraparound
-  void borders() 
-  {
-    if (location.x < -r) location.x = width+r;
-    if (location.y < -r) location.y = height+r;
-    if (location.x > width+r) location.x = -r;
-    if (location.y > height+r) location.y = -r;
-  }
+//  void borders() 
+//  {
+//    if (location.x < -r) location.x = width+r;
+//    if (location.y < -r) location.y = height+r;
+//    if (location.x > width+r) location.x = -r;
+//    if (location.y > height+r) location.y = -r;
+//  }
 }
